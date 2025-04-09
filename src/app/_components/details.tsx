@@ -12,7 +12,7 @@ type CustomTagType = "email" | "name" | "title" | "label";
 
 // Extract tag options for better maintainability with proper typing
 const TAG_OPTIONS: TagOption<CustomTagType>[] = [
-  { tag: "email", type: "overwrite", icon: Mail },
+  { tag: "email", type: "overwrite", icon: Mail, color: "blue" }, // Overwrites previous values
   { tag: "name", type: "overwrite", icon: User }, // Overwrites previous values
   { tag: "title", type: "array", icon: Tag }, // Stores all values in an array
   { tag: "label", type: "join", separator: " | ", icon: Bookmark }, // Joins values with a custom separator
@@ -66,7 +66,7 @@ export const Details = () => {
                     <Badge variant="outline" className="capitalize">
                       {tag}
                     </Badge>
-                    <span className="text-sm">
+                    <span className="text-sm px-2">
                       {Array.isArray(value) ? value.join(", ") : String(value)}
                     </span>
                   </div>

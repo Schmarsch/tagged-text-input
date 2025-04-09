@@ -173,7 +173,7 @@ const parseInputText = <T extends string = string>(
 ): { parsedOutput: TagInputValue<T>; detectedTags: T[] } => {
   // Initialize containers for parsed data
   let fields: Record<T, TagValue> = {} as Record<T, TagValue>;
-  const detected: T[] = [];
+  let detected: T[] = [];
   const defaultText: string[] = [];
 
   // Split the input text by spaces to process each word
@@ -191,6 +191,7 @@ const parseInputText = <T extends string = string>(
         defaultDuplicateHandling,
         defaultSeparator
       );
+      detected = result.detected;
       fields = result.fields;
       if (result.isTag) {
         isTag = true;
@@ -204,6 +205,7 @@ const parseInputText = <T extends string = string>(
         defaultDuplicateHandling,
         defaultSeparator
       );
+      detected = result.detected;
       fields = result.fields;
       if (result.isTag) {
         isTag = true;

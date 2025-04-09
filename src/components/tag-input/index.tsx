@@ -1,9 +1,7 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import React, { useCallback, useEffect } from "react";
+import { CustomBadge } from "./components";
 import type { TagInputProps, TagInputValue, TagOption } from "./types";
 import { parseInputText } from "./util";
 
@@ -63,10 +61,11 @@ export const TagInput = <T extends string = string>({
    * This runs whenever the input value changes or when dependencies change.
    */
   useEffect(() => {
-    const { parsedOutput, detectedTags } = parseInput(inputValue);
+    const { parsedOutput, detectedTags: detectedTagsInside } =
+      parseInput(inputValue);
 
     // Update detectedTags - this should happen on every input change
-    setDetectedTags(detectedTags);
+    setDetectedTags(detectedTagsInside);
 
     // Only update parsedFields if there's an actual change
     const newOutputStr = JSON.stringify(parsedOutput);
@@ -80,19 +79,11 @@ export const TagInput = <T extends string = string>({
 
       // Call the onChange callback if provided
       if (onChange) {
-        onChange(parsedOutput, inputValue);
+        onChange(parsedOutput, inputValue, detectedTags);
       }
     }
-
-    // Debug detected tags - moved outside the condition
-    console.log("Detected tags:", detectedTags);
-  }, [
-    inputValue,
-    parseInput,
-    onChange,
-    parsedFields.default,
-    parsedFields.tags,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue]);
 
   /**
    * Handler for input changes.
@@ -117,24 +108,6 @@ export const TagInput = <T extends string = string>({
   };
 
   /**
-   * Helper function to determine the badge variant based on tag name
-   * This can be customized based on tag names or other criteria
-   * @param {T} tag - The tag name
-   * @returns {string} The badge variant to use
-   */
-  const getTagVariant = (tag: T): "default" | "secondary" | "outline" => {
-    // Example logic to vary badge appearance based on tag name
-    // This can be customized as needed
-    const tagStr = String(tag).toLowerCase();
-    if (tagStr.includes("priority") || tagStr.includes("important")) {
-      return "default";
-    } else if (tagStr.includes("status")) {
-      return "secondary";
-    }
-    return "outline";
-  };
-
-  /**
    * Handles clicking on a tag button to add a tag to the input
    * @param {T | TagOptionConfig<T>} option - The tag option to add
    */
@@ -146,6 +119,12 @@ export const TagInput = <T extends string = string>({
 
     // Set a placeholder value that the user can replace
     const newInput = `${inputValue}${spacePrefix}${tagName}:`;
+
+    // check if the input ends with the tag, if so, remove it
+    if (inputValue.endsWith(`${tagName}:`)) {
+      setInputValue(inputValue.slice(0, -`${tagName}:`.length));
+      return;
+    }
 
     setInputValue(newInput);
 
@@ -172,47 +151,59 @@ export const TagInput = <T extends string = string>({
     return option.icon;
   };
 
+  const getTagColor = (option: TagOption<T>) => {
+    if (typeof option === "string") {
+      return undefined;
+    }
+    return option.color;
+  };
+
   return (
-    <div className="flex flex-col gap-2">
-      {/* Tags display section */}
-      {detectedTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-1">
-          {detectedTags.map((tag) => (
-            <Badge key={tag} variant={getTagVariant(tag)}>
-              {tag}: {getTagDisplayValue(tag)}
-            </Badge>
-          ))}
-        </div>
-      )}
+    <div className="selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-12 w-full rounded-md border bg-transparent px-2 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none items-center">
+      <div className="flex gap-2 pr-2 overflow-hidden shrink-0">
+        {/* Render detected tags as badges */}
+        {Object.keys(parsedFields.tags).map((tag, index) => {
+          const tagValue = getTagDisplayValue(tag as T);
+          const Icon = getTagIcon(tagOptions[index] as TagOption<T>);
+          const color = getTagColor(tagOptions[index] as TagOption<T>);
 
-      {/* Input field */}
-      <Input
-        placeholder={placeholder}
-        onChange={handleInputChange}
-        value={inputValue}
-      />
-
-      {/* Tag buttons section - only show if we have tag options with icons */}
-      {tagOptions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-1">
-          {tagOptions.map((option, index) => {
-            const Icon = getTagIcon(option);
-            const tagName = typeof option === "string" ? option : option.tag;
-
-            return (
-              <Button
-                key={index}
-                variant="outline"
-                size="icon"
-                onClick={() => handleTagButtonClick(option)}
-                title={`Add ${tagName} tag`}
-              >
-                {Icon && <Icon className="h-4 w-4" />}
-              </Button>
-            );
-          })}
-        </div>
-      )}
+          return (
+            <CustomBadge key={index} color={color}>
+              {Icon && <Icon className="mr-1" />}
+              {tagValue}
+            </CustomBadge>
+          );
+        })}
+      </div>
+      <div className="relative flex flex-col w-full gap-2">
+        {/* Input field */}
+        <input
+          placeholder={placeholder}
+          onChange={handleInputChange}
+          value={inputValue}
+          type="text"
+          className="focus:outline-0"
+        />
+        {/* Tag buttons section - only show if we have tag options with icons */}
+        {tagOptions.length > 0 && (
+          <div className="absolute right-0 flex items-center h-full gap-2">
+            {tagOptions.map((option, index) => {
+              const Icon = getTagIcon(option);
+              const tagName = typeof option === "string" ? option : option.tag;
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleTagButtonClick(option)}
+                  title={`Add ${tagName} tag`}
+                  className="flex items-center justify-center text-white rounded-full size-6 hover:bg-foreground/20"
+                >
+                  {Icon && <Icon className="w-4 h-4" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

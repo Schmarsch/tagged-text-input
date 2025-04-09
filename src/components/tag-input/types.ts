@@ -11,6 +11,7 @@ import { LucideIcon } from "lucide-react";
 interface BaseTagOptionConfig<T extends string = string> {
   tag: T;
   icon?: LucideIcon; // Optional LucideIcon component for visual representation
+  color?: string; // Optional color for the tag
 }
 
 /**
@@ -86,7 +87,11 @@ export type TagInputValue<T extends string = string> = {
 export interface TagInputProps<T extends string = string> {
   tagOptions?: TagOption<T>[];
   value?: TagInputValue<T>;
-  onChange?: (parsedValue: TagInputValue<T>, value: string) => void;
+  onChange?: (
+    _parsedValue: TagInputValue<T>,
+    _value: string,
+    _detectedTags: T[]
+  ) => void;
   placeholder?: string;
   defaultDuplicateHandling?: TagDuplicateHandling;
   defaultSeparator?: string;
